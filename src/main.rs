@@ -65,11 +65,15 @@ fn connect<A: ToSocketAddrs>(ip: A) -> Result<()> {
     let server_addr = get_scoket_addres(ip)?;
     let mut server = TcpStream::connect(server_addr)?;
     println!("Connected to {server_addr}");
-    let mut server_input = vec![0;1024];
+    
     loop {
         let console_input = get_console_input("> ")?;
+        if &console_input == "quit\n" {
+            return Ok(());
+        }
         server.write_all(console_input.as_bytes())?;
-        if &console_input == "quit\n" { return Ok(()) }
+
+        let mut server_input = vec![0;1024];
         match server.read(&mut server_input)? {
             0 => return Err("Nothing read from server, did it disconect?".into()),
             _bytes_read => {}
