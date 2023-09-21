@@ -1,8 +1,7 @@
 use std::{
     env,
     io::{
-        BufRead,
-        BufReader,
+        Read,
         stdin,
         stdout,
         Write,
@@ -18,8 +17,9 @@ use std::{
 type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
 
 fn main() -> Result<()> {
-    match env::args().nth(1) {
-        Some(argument) => match env::args().nth(2) {
+    let args = env::args().collect::<Vec<String>>();
+    match args.get(1) {
+        Some(argument) => match args.get(2) {
             Some(ip) => match argument.as_str() {
                 "serve" => serve(ip)?,
                 "connect" => connect(ip)?,
@@ -27,7 +27,7 @@ fn main() -> Result<()> {
             }
             None => print_usage("Missing IP argument".into()),
         }
-        None => print_usage("Too few arguments".into()),
+        None => print_usage("Missing arguments".into()),
     }
     Ok(())
 }
@@ -36,23 +36,23 @@ fn serve<A: ToSocketAddrs>(ip: A) -> Result<()> {
     let server_addr = get_scoket_addres(ip)?;
     let listener = TcpListener::bind(server_addr)?;
     println!("Listening on {server_addr}");
-    let mut client_input = String::new();
-    for (connection_id, possible_connection) in listener.incoming().enumerate() {
-        let client = possible_connection?;
-        println!("Client {} connected from {}", connection_id, client.peer_addr()?);
-        let mut reader = BufReader::new(client);
+    for (client_id, possible_connection) in listener.incoming().enumerate() {
+        let mut client = possible_connection?;
+        println!("\nClient {} connected from {}", client_id, client.peer_addr()?);
         loop {
-            match reader.read_line(&mut client_input) {
-                Ok(0) => return Ok(()),
-                Err(error) => return Err(error.into()),
+            let mut client_input = vec![0;1024];
+            match client.read(&mut client_input) {
+                Ok(0) => break,
                 Ok(_bytes_read) => {},
+                Err(_error) if _error.kind() == std::io::ErrorKind::ConnectionReset => break,
+                Err(error) => return Err(error.into()),
             }
-            print!("{client_input}");
-            if &client_input == "quit\n" { break }
-            client_input.clear();
+            // if &client_input == b"quit\n" { break }
+            let server_output = client_input.clone();
+            client.write_all(&server_output)?;
+            print!("{}: {}", client_id, String::from_utf8(server_output)?);
         }
-        client_input.clear();
-        println!("\nWaiting for new connection");
+        println!("Client {client_id} disconected\nWaiting for new connection");
     }
     Ok(())
 }
@@ -61,12 +61,17 @@ fn connect<A: ToSocketAddrs>(ip: A) -> Result<()> {
     let server_addr = get_scoket_addres(ip)?;
     let mut server = TcpStream::connect(server_addr)?;
     println!("Connected to {server_addr}");
-    let mut console_input = String::new();
-    while &console_input != "quit\n" {
-        console_input = get_console_input("")?;
+    let mut server_input = vec![0;1024];
+    loop {
+        let console_input = get_console_input("> ")?;
         server.write_all(console_input.as_bytes())?;
+        if &console_input == "quit\n" { return Ok(()) }
+        match server.read(&mut server_input)? {
+            0 => return Err("Nothing read from server, did it disconect?".into()),
+            _bytes_read => {}
+        }
+        println!("$ {}", String::from_utf8(server_input.clone())?);
     }
-    Ok(())
 }
 
 fn get_scoket_addres<A: ToSocketAddrs>(ip: A) -> Result<SocketAddr> {
