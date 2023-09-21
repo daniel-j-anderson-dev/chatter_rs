@@ -36,18 +36,22 @@ fn serve<A: ToSocketAddrs>(ip: A) -> Result<()> {
     let server_addr = get_scoket_addres(ip)?;
     let listener = TcpListener::bind(server_addr)?;
     println!("Listening on {server_addr}");
+
     for (client_id, possible_connection) in listener.incoming().enumerate() {
         let mut client = possible_connection?;
         println!("\nClient {} connected from {}", client_id, client.peer_addr()?);
+
         loop {
             let mut client_input = vec![0;1024];
             match client.read(&mut client_input) {
-                Ok(0) => break,
+                Ok(0) => break, // disconect
                 Ok(_bytes_read) => {},
-                Err(_error) if _error.kind() == std::io::ErrorKind::ConnectionReset => break,
-                Err(error) => return Err(error.into()),
+                Err(error) => {
+                    eprintln!("Client {} Error: {}", client_id, error);
+                    break;
+                }
             }
-            // if &client_input == b"quit\n" { break }
+
             let server_output = client_input.clone();
             client.write_all(&server_output)?;
             print!("{}: {}", client_id, String::from_utf8(server_output)?);
