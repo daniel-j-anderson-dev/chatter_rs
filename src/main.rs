@@ -52,7 +52,7 @@ fn serve<A: ToSocketAddrs>(ip: A) -> Result<()> {
                 }
             }
 
-            let server_output = client_input.clone();
+            let server_output = client_input.clone(); // echo for now
             client.write_all(&server_output)?;
             print!("{}: {}", client_id, String::from_utf8(server_output)?);
         }
