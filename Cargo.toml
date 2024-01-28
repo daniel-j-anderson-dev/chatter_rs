@@ -1,5 +1,5 @@
 [package]
-name = "chatter"
+name = "one-on-one"
 version = "0.1.0"
 edition = "2021"
 
@@ -7,6 +7,8 @@ edition = "2021"
 
 [dependencies]
 chrono = { version = "0.4.33", features = ["serde"] }
+clap = { version = "4.4.18", features = ["cargo"] }
+color-eyre = { version = "0.6.2", default-features = false }
 features = "0.10.0"
 serde = { version = "1.0.195", features = ["derive"] }
 serde_json = "1.0.111"
