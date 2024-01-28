@@ -1,6 +1,6 @@
 use std::io::{stdin, stdout, Write};
 
-pub fn terminal_read_line(prompt: &str) -> Result<String, std::io::Error> {
+pub fn read_line(prompt: &str) -> Result<String, std::io::Error> {
     let mut stdout = stdout();
     stdout.write(prompt.as_bytes())?;
     stdout.flush()?;
