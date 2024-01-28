@@ -1,3 +1,6 @@
+mod message;
+mod room;
+
 use std::{
     io::{Read, Write},
     net::{TcpListener, TcpStream},

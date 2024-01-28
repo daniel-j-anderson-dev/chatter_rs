@@ -1,13 +1,8 @@
 mod configuration;
-mod message;
 mod network;
 mod terminal;
 
-use crate::{
-    configuration::Configuration,
-    message::Message,
-    network::{receive_data, send_data},
-};
+use crate::configuration::Configuration;
 
 use color_eyre::eyre::Result;
 
@@ -18,7 +13,7 @@ fn main() -> Result<()> {
     // load configuration from command line args
     let config = Configuration::from_args()?;
 
-   dbg!(config); 
+    dbg!(config);
 
     return Ok(());
 }
