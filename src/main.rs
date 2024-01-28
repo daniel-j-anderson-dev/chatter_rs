@@ -1,12 +1,24 @@
+mod configuration;
 mod message;
 mod network;
 mod terminal;
 
-use message::Message;
-use network::{receive_data, send_data};
-use terminal::terminal_read_line;
+use crate::{
+    configuration::Configuration,
+    message::Message,
+    network::{receive_data, send_data},
+};
 
-fn main() -> Result<(), Box<dyn std::error::Error>> {
-    
+use color_eyre::eyre::Result;
+
+fn main() -> Result<()> {
+    //set up panic/error handlers
+    color_eyre::install()?;
+
+    // load configuration from command line args
+    let config = Configuration::from_args()?;
+
+   dbg!(config); 
+
     return Ok(());
 }
